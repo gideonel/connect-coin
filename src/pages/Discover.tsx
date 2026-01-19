@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Heart, Filter, MapPin, Sliders } from 'lucide-react';
+import { Heart, Filter, MapPin, Sliders, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProfileCard } from '@/components/cards/ProfileCard';
@@ -7,14 +7,21 @@ import { Header } from '@/components/layout/Header';
 import { sampleUsers, currentUser } from '@/data/sampleUsers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { FilterPanel, FilterState } from '@/components/FilterPanel';
+import { CompatibilityScore } from '@/components/CompatibilityScore';
 
 const Discover = () => {
   const [users, setUsers] = useState(sampleUsers);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchedUser, setMatchedUser] = useState<typeof sampleUsers[0] | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
 
   const currentProfile = users[currentIndex];
+
+  // Generate random compatibility score for demo
+  const compatibilityScore = Math.floor(Math.random() * 30) + 70;
 
   const handleLike = useCallback((userId: string) => {
     const user = users.find(u => u.id === userId);
@@ -50,6 +57,11 @@ const Discover = () => {
     setMatchedUser(null);
   };
 
+  const handleApplyFilters = (filters: FilterState) => {
+    setActiveFilters(filters);
+    toast.success('Filters applied!');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -66,7 +78,7 @@ const Discover = () => {
               <Button variant="outline" size="icon">
                 <MapPin className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={() => setShowFilters(true)}>
                 <Sliders className="w-4 h-4" />
               </Button>
             </div>
@@ -76,14 +88,25 @@ const Discover = () => {
           <div className="flex flex-wrap gap-2 mb-6">
             <Badge variant="secondary" className="gap-1">
               <Filter className="w-3 h-3" />
-              Women
+              {activeFilters?.gender.join(', ') || 'Women'}
             </Badge>
-            <Badge variant="secondary">25-35 years</Badge>
-            <Badge variant="secondary">Within 25 miles</Badge>
+            <Badge variant="secondary">
+              {activeFilters ? `${activeFilters.ageRange[0]}-${activeFilters.ageRange[1]}` : '25-35'} years
+            </Badge>
+            <Badge variant="secondary">
+              Within {activeFilters?.distance || 25} miles
+            </Badge>
           </div>
 
+          {/* Compatibility Score for current profile */}
+          {currentProfile && currentIndex < users.length && (
+            <div className="mb-4 p-4 bg-card rounded-xl border border-border">
+              <CompatibilityScore score={compatibilityScore} />
+            </div>
+          )}
+
           {/* Cards Stack */}
-          <div className="relative h-[600px] flex items-center justify-center">
+          <div className="relative h-[550px] flex items-center justify-center">
             {currentIndex < users.length ? (
               <>
                 {/* Background cards for stack effect */}
@@ -159,6 +182,13 @@ const Discover = () => {
         </div>
       </main>
 
+      {/* Filter Panel */}
+      <FilterPanel 
+        isOpen={showFilters} 
+        onClose={() => setShowFilters(false)} 
+        onApply={handleApplyFilters}
+      />
+
       {/* Match Modal */}
       <AnimatePresence>
         {showMatch && matchedUser && (
@@ -205,9 +235,17 @@ const Discover = () => {
                 <h2 className="font-serif text-3xl font-bold mb-2">
                   It's a <span className="gradient-text">Match!</span>
                 </h2>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-4">
                   You and {matchedUser.name} liked each other
                 </p>
+                
+                {/* Show compatibility */}
+                <div className="mb-6 flex justify-center">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-coral/10 rounded-full">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">{compatibilityScore}% Compatible</span>
+                  </div>
+                </div>
 
                 <div className="flex gap-3">
                   <Button 

@@ -1,10 +1,13 @@
-import { Heart, MessageCircle, User, Coins, Crown, Menu, X } from 'lucide-react';
+import { Heart, MessageCircle, User, Coins, Crown, Menu, X, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { currentUser } from '@/data/sampleUsers';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NotificationCenter } from '@/components/NotificationCenter';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { DailyRewards } from '@/components/DailyRewards';
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,7 +51,16 @@ export const Header = () => {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Daily Rewards */}
+            <DailyRewards />
+            
+            {/* Notifications */}
+            <NotificationCenter />
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Token Balance */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
               <Coins className="w-4 h-4 text-gold" />
@@ -63,6 +75,13 @@ export const Header = () => {
               <Crown className="w-3 h-3" />
               {currentUser.premium.charAt(0).toUpperCase() + currentUser.premium.slice(1)}
             </Badge>
+
+            {/* Admin Link */}
+            <Link to="/admin" className="hidden lg:block">
+              <Button variant="ghost" size="icon">
+                <Shield className="w-5 h-5" />
+              </Button>
+            </Link>
 
             {/* Profile Avatar */}
             <Link to="/profile">
@@ -111,6 +130,12 @@ export const Header = () => {
                   </Button>
                 </Link>
               ))}
+              <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Button>
+              </Link>
               <div className="flex items-center gap-2 px-3 py-2 mt-2 rounded-lg bg-secondary">
                 <Coins className="w-4 h-4 text-gold" />
                 <span className="font-medium">{currentUser.tokens} Tokens</span>

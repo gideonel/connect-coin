@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, Send, Phone, Video, MoreVertical, Image, Mic, Smile, CheckCheck, Coins } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Send, Phone, Video, MoreVertical, Image, Mic, Smile, CheckCheck, Coins, Heart, ThumbsUp, Laugh } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,8 @@ import { Header } from '@/components/layout/Header';
 import { sampleUsers, currentUser } from '@/data/sampleUsers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { TypingIndicator } from '@/components/TypingIndicator';
+import { IcebreakerSuggestions } from '@/components/IcebreakerSuggestions';
 
 interface Message {
   id: string;
@@ -14,6 +16,7 @@ interface Message {
   text: string;
   timestamp: string;
   read: boolean;
+  reaction?: string;
 }
 
 const mockConversations = sampleUsers.slice(0, 5).map((user, index) => ({
@@ -34,11 +37,26 @@ const mockConversations = sampleUsers.slice(0, 5).map((user, index) => ({
   unread: index === 0 ? 1 : 0,
 }));
 
+const reactions = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
+
 const Messages = () => {
   const [selectedConversation, setSelectedConversation] = useState<typeof mockConversations[0] | null>(null);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [showReactions, setShowReactions] = useState<string | null>(null);
+
+  // Simulate typing indicator
+  useEffect(() => {
+    if (selectedConversation) {
+      const timer = setTimeout(() => {
+        setIsTyping(true);
+        setTimeout(() => setIsTyping(false), 3000);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedConversation]);
 
   const handleSelectConversation = (conversation: typeof mockConversations[0]) => {
     setSelectedConversation(conversation);
@@ -89,6 +107,33 @@ const Messages = () => {
       description: '5 tokens deducted',
       icon: <Coins className="w-4 h-4 text-gold" />,
     });
+
+    // Simulate reply
+    setTimeout(() => {
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          senderId: selectedConversation.user.id,
+          text: "That sounds great! 😊",
+          timestamp: 'Just now',
+          read: false,
+        }]);
+      }, 2000);
+    }, 1000);
+  };
+
+  const handleIcebreakerSelect = (message: string) => {
+    setMessageText(message);
+  };
+
+  const handleReaction = (messageId: string, reaction: string) => {
+    setMessages(messages.map(m => 
+      m.id === messageId ? { ...m, reaction } : m
+    ));
+    setShowReactions(null);
+    toast.success(`Reacted with ${reaction}`);
   };
 
   const filteredConversations = mockConversations.filter(conv =>
@@ -211,33 +256,79 @@ const Messages = () => {
                       key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} group`}
                     >
-                      <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
-                          isCurrentUser
-                            ? 'bg-gradient-to-r from-rose to-coral text-white rounded-br-md'
-                            : 'bg-secondary rounded-bl-md'
-                        }`}
-                      >
-                        <p className="text-sm">{message.text}</p>
-                        <div className={`flex items-center gap-1 mt-1 ${isCurrentUser ? 'justify-end' : ''}`}>
-                          <span className={`text-xs ${isCurrentUser ? 'text-white/70' : 'text-muted-foreground'}`}>
-                            {message.timestamp}
-                          </span>
-                          {isCurrentUser && (
-                            <CheckCheck className={`w-4 h-4 ${message.read ? 'text-blue-300' : 'text-white/50'}`} />
-                          )}
+                      <div className="relative">
+                        <div
+                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
+                            isCurrentUser
+                              ? 'bg-gradient-to-r from-rose to-coral text-white rounded-br-md'
+                              : 'bg-secondary rounded-bl-md'
+                          }`}
+                          onDoubleClick={() => !isCurrentUser && setShowReactions(message.id)}
+                        >
+                          <p className="text-sm">{message.text}</p>
+                          <div className={`flex items-center gap-1 mt-1 ${isCurrentUser ? 'justify-end' : ''}`}>
+                            <span className={`text-xs ${isCurrentUser ? 'text-white/70' : 'text-muted-foreground'}`}>
+                              {message.timestamp}
+                            </span>
+                            {isCurrentUser && (
+                              <CheckCheck className={`w-4 h-4 ${message.read ? 'text-blue-300' : 'text-white/50'}`} />
+                            )}
+                          </div>
                         </div>
+                        
+                        {/* Reaction */}
+                        {message.reaction && (
+                          <div className={`absolute -bottom-2 ${isCurrentUser ? 'left-2' : 'right-2'} bg-card rounded-full px-1 shadow-sm border border-border`}>
+                            <span className="text-sm">{message.reaction}</span>
+                          </div>
+                        )}
+
+                        {/* Reaction Picker */}
+                        <AnimatePresence>
+                          {showReactions === message.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="absolute bottom-full mb-2 left-0 bg-card rounded-full shadow-lg border border-border p-1 flex gap-1"
+                            >
+                              {reactions.map(reaction => (
+                                <button
+                                  key={reaction}
+                                  onClick={() => handleReaction(message.id, reaction)}
+                                  className="hover:scale-125 transition-transform p-1"
+                                >
+                                  {reaction}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </motion.div>
                   );
                 })}
               </AnimatePresence>
+              
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
+                    <TypingIndicator />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Message Input */}
             <div className="p-4 border-t border-border bg-background">
+              {/* Icebreaker Suggestions */}
+              <div className="flex items-center gap-2 mb-2">
+                <IcebreakerSuggestions onSelect={handleIcebreakerSelect} />
+              </div>
+              
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon">
                   <Image className="w-5 h-5" />
@@ -272,7 +363,7 @@ const Messages = () => {
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center flex items-center justify-center gap-1">
                 <Coins className="w-3 h-3 text-gold" />
-                5 tokens per message
+                5 tokens per message • Double-tap to react
               </p>
             </div>
           </div>
