@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { FilterPanel, FilterState } from '@/components/FilterPanel';
 import { CompatibilityScore } from '@/components/CompatibilityScore';
-
+import UserLocationMap from '@/components/UserLocationMap';
 const Discover = () => {
   const [users, setUsers] = useState(sampleUsers);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -17,6 +17,7 @@ const Discover = () => {
   const [matchedUser, setMatchedUser] = useState<typeof sampleUsers[0] | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
+  const [showMap, setShowMap] = useState(false);
 
   const currentProfile = users[currentIndex];
 
@@ -75,7 +76,7 @@ const Discover = () => {
               <p className="text-sm text-muted-foreground">Find your perfect match</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={() => setShowMap(true)}>
                 <MapPin className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="icon" onClick={() => setShowFilters(true)}>
@@ -187,6 +188,12 @@ const Discover = () => {
         isOpen={showFilters} 
         onClose={() => setShowFilters(false)} 
         onApply={handleApplyFilters}
+      />
+
+      {/* Location Map */}
+      <UserLocationMap
+        isOpen={showMap}
+        onClose={() => setShowMap(false)}
       />
 
       {/* Match Modal */}
